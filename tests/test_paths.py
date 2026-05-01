@@ -32,3 +32,18 @@ def test_ensure_parent_creates_missing_dirs(tmp_path):
     target = tmp_path / "a" / "b" / "c.txt"
     paths.ensure_parent(target)
     assert (tmp_path / "a" / "b").is_dir()
+
+
+def test_is_termux_true_when_prefix_set(monkeypatch):
+    monkeypatch.setenv("PREFIX", "/data/data/com.termux/files/usr")
+    assert paths.is_termux() is True
+
+
+def test_is_termux_false_when_prefix_unset(monkeypatch):
+    monkeypatch.delenv("PREFIX", raising=False)
+    assert paths.is_termux() is False
+
+
+def test_is_termux_false_for_other_prefix(monkeypatch):
+    monkeypatch.setenv("PREFIX", "/usr/local")
+    assert paths.is_termux() is False

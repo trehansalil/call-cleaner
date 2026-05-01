@@ -37,3 +37,11 @@ def log_path() -> Path:
 
 def ensure_parent(p: Path) -> None:
     p.parent.mkdir(parents=True, exist_ok=True)
+
+
+TERMUX_PREFIX = "/data/data/com.termux/files/usr"
+
+
+def is_termux() -> bool:
+    """True if running inside native Termux (vs PRoot Ubuntu / generic Linux)."""
+    return os.environ.get("PREFIX") == TERMUX_PREFIX
