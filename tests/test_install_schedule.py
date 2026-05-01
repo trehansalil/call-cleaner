@@ -26,3 +26,13 @@ def test_emits_pkg_install_step():
     assert "pkg install" in out
     assert "termux-api" in out
     assert "proot-distro" in out
+
+
+def test_network_unmetered_only_on_run_scheduler():
+    out = install_schedule.render()
+    # Slice from each --script line to the next --script (or EOF).
+    blocks = out.split("--script ")
+    run_block = next(b for b in blocks if b.startswith("~/.shortcuts/call-cleaner.sh"))
+    purge_block = next(b for b in blocks if b.startswith("~/.shortcuts/call-cleaner-purge.sh"))
+    assert "--network unmetered" in run_block
+    assert "--network" not in purge_block
