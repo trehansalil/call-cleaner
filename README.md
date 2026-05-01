@@ -1,5 +1,7 @@
 # Call Cleaner
 
+[![tests](https://github.com/trehansalil/call-cleaner/actions/workflows/test.yml/badge.svg)](https://github.com/trehansalil/call-cleaner/actions/workflows/test.yml)
+
 Sweep old call recordings on `/sdcard/Music/Recordings/Call Recordings` (and other folders you configure) into a trash directory, with a 30-day retention window. Designed to run inside a `proot-distro` Ubuntu on Termux on a OnePlus phone, with daily scheduling via `termux-job-scheduler`.
 
 ## Install (PRoot side)
