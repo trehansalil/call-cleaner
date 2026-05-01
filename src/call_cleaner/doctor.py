@@ -61,15 +61,20 @@ def run(*, config_path: Path | None = None, state_path: Path | None = None) -> R
         rep.info(f"trash dir writable: {trash_dir}")
     else:
         rep.error(f"trash dir not writable: {trash_dir}: {why}")
+        rep.info("  hint: run 'termux-setup-storage' in native Termux to grant /sdcard access.")
 
     s = state_mod.load(state_path)
     if s.last_run_at is None:
         rep.warn("no recorded runs yet")
+        rep.info("  hint: run 'cleaner run' to do your first run.")
     else:
         age = time.time() - s.last_run_at
         if age > STALE_RUN_SECS:
             rep.warn(f"last run is stale: {age/3600:.1f}h ago")
+            rep.info("  hint: check the daily job is registered — see 'cleaner install-schedule'.")
         else:
             rep.info(f"last run: {age/3600:.1f}h ago")
+
+    rep.info("note: proot-distro reachability must be checked from native Termux; see 'cleaner install-schedule'.")
 
     return rep

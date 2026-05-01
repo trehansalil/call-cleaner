@@ -4,9 +4,17 @@ Sweep old call recordings on `/sdcard/Music/Recordings/Call Recordings` (and oth
 
 ## Install (PRoot side)
 
+One-time venv setup (only the first time, so `make` can find pip/pytest):
+
 ```sh
 cd /root/call-cleaner
-make dev          # installs in editable mode + pytest
+python3 -m venv .venv
+```
+
+Then:
+
+```sh
+make dev          # installs the package in editable mode + pytest
 make test         # runs the suite
 make install      # copies bin + share + package into /usr/local/
 ```

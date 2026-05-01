@@ -75,7 +75,18 @@ def trash_file(
         "preset": preset,
         "rule_index": rule_index,
     }
-    sidecar.write_text(json.dumps(meta, indent=2))
+    try:
+        sidecar.write_text(json.dumps(meta, indent=2))
+    except OSError:
+        # Sidecar write failed — try to roll the payload back so we don't leave an orphan.
+        try:
+            os.rename(payload, src)
+        except OSError:
+            try:
+                shutil.move(str(payload), str(src))
+            except OSError:
+                pass  # truly wedged; payload remains as an orphan
+        raise
     return TrashItem(
         id=id_,
         payload=payload,

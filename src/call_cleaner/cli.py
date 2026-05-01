@@ -12,6 +12,7 @@ from pathlib import Path
 from . import config as config_mod
 from . import doctor as doctor_mod
 from . import install_schedule
+from . import log as log_mod
 from . import paths as paths_mod
 from . import scanner
 from . import state as state_mod
@@ -70,6 +71,7 @@ def cmd_run(args) -> int:
     global _interrupt_requested
     _interrupt_requested = False
     _install_sigint_handler()
+    logger = log_mod.setup()
     cfg = _load_config()
     preset = _resolve_preset(cfg, args.preset)
     matches = scanner.scan_preset(preset)
@@ -87,9 +89,11 @@ def cmd_run(args) -> int:
             cur_mtime = m.path.stat().st_mtime
         except OSError:
             print(f"INFO: vanished, skipping: {m.path}", file=sys.stderr)
+            logger.info("vanished, skipping: %s", m.path)
             continue
         if cur_mtime != m.mtime:
             print(f"INFO: mtime changed since scan, skipping: {m.path}", file=sys.stderr)
+            logger.info("mtime changed since scan, skipping: %s", m.path)
             continue
         if m.rule.action == "delete":
             try:
@@ -98,6 +102,7 @@ def cmd_run(args) -> int:
                 freed += m.size
             except OSError as e:
                 print(f"WARN: could not delete {m.path}: {e}", file=sys.stderr)
+                logger.warning("could not delete %s: %s", m.path, e)
         else:
             try:
                 trash_mod.trash_file(
@@ -110,9 +115,11 @@ def cmd_run(args) -> int:
                 freed += m.size
             except OSError as e:
                 print(f"WARN: could not trash {m.path}: {e}", file=sys.stderr)
+                logger.warning("could not trash %s: %s", m.path, e)
         # Honor SIGINT after each file finishes its atomic rename + sidecar.
         if _interrupt_requested:
             print("INFO: interrupted, exiting cleanly.", file=sys.stderr)
+            logger.info("interrupted, exiting cleanly.")
             break
     s = state_mod.load(paths_mod.state_path())
     s.last_run_at = int(time.time())
@@ -120,6 +127,7 @@ def cmd_run(args) -> int:
     s.last_run_trashed = n
     s.last_run_freed_bytes = freed
     state_mod.save(paths_mod.state_path(), s)
+    logger.info("run complete: preset=%s trashed=%d freed=%d", preset.name, n, freed)
     print(f"processed {n} file(s), freed {_human_size(freed)} (preset={preset.name})")
     return 130 if _interrupt_requested else 0
 
@@ -181,12 +189,14 @@ def cmd_trash_empty(args) -> int:
 
 
 def cmd_purge(args) -> int:
+    logger = log_mod.setup()
     cfg = _load_config()
     n = trash_mod.purge(Path(cfg.trash.dir))
     s = state_mod.load(paths_mod.state_path())
     s.last_purge_at = int(time.time())
     s.last_purge_removed = n
     state_mod.save(paths_mod.state_path(), s)
+    logger.info("purge complete: removed=%d", n)
     print(f"purged {n} expired item(s).")
     return 0
 

@@ -192,3 +192,13 @@ def test_run_handles_sigint_between_files(tmp_home, fake_sdcard, monkeypatch):
     # Only one file moved; the others remain.
     remaining = list((fake_sdcard / "recordings").glob("*.mp3"))
     assert len(remaining) == 2
+
+
+def test_run_writes_to_log_file(tmp_home, fake_sdcard):
+    write_min_config(tmp_home, fake_sdcard)
+    make_old_file(fake_sdcard / "recordings" / "old.mp3")
+    cli.main(["run"])
+    log_path = paths.log_path()
+    assert log_path.exists()
+    body = log_path.read_text()
+    assert "run complete" in body

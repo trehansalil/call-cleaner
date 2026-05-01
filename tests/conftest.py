@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 
@@ -18,3 +20,11 @@ def fake_sdcard(tmp_path):
     sdcard = tmp_path / "sdcard"
     sdcard.mkdir()
     return sdcard
+
+
+@pytest.fixture(autouse=True)
+def _reset_call_cleaner_logger():
+    yield
+    logger = logging.getLogger("call_cleaner")
+    for h in list(logger.handlers):
+        logger.removeHandler(h)

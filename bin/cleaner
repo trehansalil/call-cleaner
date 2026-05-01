@@ -1,2 +1,9 @@
 #!/bin/sh
+# Make the installed call_cleaner package importable regardless of the
+# system python's default sys.path.
+PKG_DIR="/usr/local/lib/call-cleaner"
+if [ -d "$PKG_DIR" ]; then
+    PYTHONPATH="${PKG_DIR}${PYTHONPATH:+:${PYTHONPATH}}"
+    export PYTHONPATH
+fi
 exec python3 -m call_cleaner "$@"

@@ -138,3 +138,25 @@ def test_trash_dir_is_created(tmp_path):
     bin_dir = tmp_path / "trash" / "nested"  # does not exist
     trash.trash_file(src, bin_dir, retention_days=30, preset="x", rule_index=0)
     assert bin_dir.is_dir()
+
+
+def test_trash_file_rolls_back_on_sidecar_failure(tmp_path, monkeypatch):
+    src = tmp_path / "x.mp3"
+    make_file(src, b"hello")
+    bin_dir = tmp_path / "trash"
+
+    real_write_text = type(src).write_text
+
+    def boom_on_sidecar(self, *a, **kw):
+        if self.suffix == ".json":
+            raise OSError("simulated sidecar failure")
+        return real_write_text(self, *a, **kw)
+
+    monkeypatch.setattr(type(src), "write_text", boom_on_sidecar)
+    with pytest.raises(OSError, match="simulated"):
+        trash.trash_file(src, bin_dir, retention_days=30, preset="x", rule_index=0)
+    # Source file is back where it started.
+    assert src.exists()
+    assert src.read_bytes() == b"hello"
+    # No payload left in trash.
+    assert not any(p.suffix == ".mp3" for p in bin_dir.iterdir())
