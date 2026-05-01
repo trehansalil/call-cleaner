@@ -95,13 +95,15 @@ def interactive_prompt() -> dict[str, str]:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="call_cleaner.first_run")
-    p.add_argument("--detect", action="store_true", default=True,
-                   help="run auto-detection (default)")
+    p.add_argument("--detect", action=argparse.BooleanOptionalAction, default=True,
+                   help="auto-detect known recording paths under --root (default: --detect)")
     p.add_argument("--root", default="/sdcard",
                    help="path to scan for known recording folders")
     args = p.parse_args(argv)
 
-    found = detect(root=args.root)
+    found: dict[str, str] = {}
+    if args.detect:
+        found = detect(root=args.root)
     if not found:
         found = interactive_prompt()
     if not found:

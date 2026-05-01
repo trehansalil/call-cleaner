@@ -103,3 +103,24 @@ def test_main_falls_back_to_prompt_when_nothing_detected(tmp_home, fake_sdcard, 
     from call_cleaner import paths
     cfg = config_mod.load(paths.config_path())
     assert "manual" in cfg.paths
+
+
+def test_main_no_detect_skips_auto_detection(tmp_home, fake_sdcard, monkeypatch):
+    # Even though there's a path that *would* be auto-detected, --no-detect
+    # forces straight to the interactive prompt.
+    p = fake_sdcard / "Music" / "Recordings" / "Call Recordings"
+    p.mkdir(parents=True)
+    monkeypatch.setattr(first_run, "KNOWN_RECORDING_PATHS", {
+        "calls": "Music/Recordings/Call Recordings",
+    })
+    real = fake_sdcard / "manual"
+    real.mkdir()
+    inputs = iter([f"manual={real}", ""])
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+    rc = first_run.main(["--no-detect", "--root", str(fake_sdcard)])
+    assert rc == 0
+    from call_cleaner import config as config_mod, paths
+    cfg = config_mod.load(paths.config_path())
+    # Auto-detected "calls" was skipped; only manually-entered "manual" present.
+    assert "manual" in cfg.paths
+    assert "calls" not in cfg.paths
