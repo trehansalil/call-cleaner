@@ -82,6 +82,25 @@ def test_run_calls_low_storage_notify(tmp_home, fake_sdcard, monkeypatch):
     assert any(t == "Storage low" for t, c, a in seen)
 
 
+def test_run_no_low_storage_notify_when_nothing_trashed(tmp_home, fake_sdcard, monkeypatch):
+    # Config exists but no old files — n will be 0 after the run.
+    write_min_config(tmp_home, fake_sdcard)
+    # Note: NO call to make_old_file — recordings dir empty.
+    (fake_sdcard / "recordings").mkdir(exist_ok=True)
+    monkeypatch.setattr(cli.notifier, "is_low_battery", lambda **kw: False)
+    monkeypatch.setattr(cli.notifier, "is_battery_saver_on", lambda: False)
+    monkeypatch.setattr(cli.notifier, "is_low_storage", lambda **kw: True)  # storage IS low
+    seen = []
+    monkeypatch.setattr(
+        cli.notifier, "notify",
+        lambda title, content, **kw: seen.append((title, content)) or True,
+    )
+    rc = cli.main(["run"])
+    assert rc == 0
+    # No notifications fired because n == 0.
+    assert seen == []
+
+
 def test_run_no_notify_when_dry_run(tmp_home, fake_sdcard, monkeypatch):
     write_min_config(tmp_home, fake_sdcard)
     make_old_file(fake_sdcard / "recordings" / "old.mp3")

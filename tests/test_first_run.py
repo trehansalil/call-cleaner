@@ -35,7 +35,8 @@ def test_write_seeded_config_round_trips(tmp_path):
     for v in found.values():
         from pathlib import Path
         Path(v).mkdir(parents=True)
-    first_run.write_seeded_config(cfg_path, found)
+    result = first_run.write_seeded_config(cfg_path, found)
+    assert result is True
     cfg = config_mod.load(cfg_path)
     assert cfg.default_preset == "default"
     assert set(cfg.paths) == {"calls", "voice"}
@@ -103,6 +104,49 @@ def test_main_falls_back_to_prompt_when_nothing_detected(tmp_home, fake_sdcard, 
     from call_cleaner import paths
     cfg = config_mod.load(paths.config_path())
     assert "manual" in cfg.paths
+
+
+def test_write_seeded_config_skips_if_exists(tmp_path):
+    cfg_path = tmp_path / "config.toml"
+    real = tmp_path / "real_dir"
+    real.mkdir()
+    found = {"x": str(real)}
+    # First write: returns True, file created
+    assert first_run.write_seeded_config(cfg_path, found) is True
+    original = cfg_path.read_text()
+    # Second write: returns False, file unchanged
+    assert first_run.write_seeded_config(cfg_path, found) is False
+    assert cfg_path.read_text() == original
+
+
+def test_write_seeded_config_overwrite_flag(tmp_path):
+    cfg_path = tmp_path / "config.toml"
+    real_a = tmp_path / "a"
+    real_a.mkdir()
+    real_b = tmp_path / "b"
+    real_b.mkdir()
+    first_run.write_seeded_config(cfg_path, {"a": str(real_a)})
+    first_run.write_seeded_config(cfg_path, {"b": str(real_b)}, overwrite=True)
+    body = cfg_path.read_text()
+    assert "b =" in body
+    assert "a =" not in body
+
+
+def test_main_skips_when_config_exists(tmp_home, fake_sdcard, monkeypatch, capsys):
+    # First run writes config.
+    p = fake_sdcard / "Music" / "Recordings" / "Call Recordings"
+    p.mkdir(parents=True)
+    monkeypatch.setattr(first_run, "KNOWN_RECORDING_PATHS", {
+        "calls": "Music/Recordings/Call Recordings",
+    })
+    rc1 = first_run.main(["--detect", "--root", str(fake_sdcard)])
+    assert rc1 == 0
+    capsys.readouterr()
+    # Second run (config now exists) — should skip and exit 0.
+    rc2 = first_run.main(["--detect", "--root", str(fake_sdcard)])
+    assert rc2 == 0
+    out = capsys.readouterr().out
+    assert "not overwriting" in out
 
 
 def test_main_no_detect_skips_auto_detection(tmp_home, fake_sdcard, monkeypatch):

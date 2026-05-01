@@ -48,6 +48,7 @@ Once v0.2.0 is on PyPI:
 3. Copy `termux-packages-recipe/build.sh` from this repo into your fork at `packages/call-cleaner/build.sh`.
 4. Replace `__FILL_IN_AFTER_PYPI_PUBLISH__` with the sha256 from step 1.
 5. Open a PR titled `new package: call-cleaner` against `termux/termux-packages`.
+   - After the PR is merged, users get `cleaner` directly via `pkg install call-cleaner`. They still need to run `cleaner install-schedule` once to register the daily background job.
 6. Track review with `gh pr view` from this repo. Address feedback within 7 days.
 
 ## Definition of done

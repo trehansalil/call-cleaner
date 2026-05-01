@@ -36,10 +36,13 @@ def detect(root: str = "/sdcard") -> dict[str, str]:
     return out
 
 
-def write_seeded_config(path: Path, found: dict[str, str]) -> None:
-    """Write a config.toml from detected aliases. Raises ValueError if empty."""
+def write_seeded_config(path: Path, found: dict[str, str], *, overwrite: bool = False) -> bool:
+    """Write a config.toml from detected aliases. Returns True if written, False if skipped.
+    Raises ValueError if `found` is empty."""
     if not found:
         raise ValueError("need at least one folder; none provided")
+    if path.exists() and not overwrite:
+        return False
     paths_mod.ensure_parent(path)
     lines = [
         'default_preset = "default"',
@@ -60,6 +63,7 @@ def write_seeded_config(path: Path, found: dict[str, str]) -> None:
         lines.append(f'action = "trash"')
         lines.append("")
     path.write_text("\n".join(lines))
+    return True
 
 
 def interactive_prompt() -> dict[str, str]:
@@ -99,6 +103,8 @@ def main(argv: list[str] | None = None) -> int:
                    help="auto-detect known recording paths under --root (default: --detect)")
     p.add_argument("--root", default="/sdcard",
                    help="path to scan for known recording folders")
+    p.add_argument("--overwrite", action="store_true",
+                   help="overwrite an existing config.toml (default: skip)")
     args = p.parse_args(argv)
 
     found: dict[str, str] = {}
@@ -111,8 +117,11 @@ def main(argv: list[str] | None = None) -> int:
         print("Run `cleaner config edit` later to add some.", file=sys.stderr)
         return 1
     cfg_path = paths_mod.config_path()
-    write_seeded_config(cfg_path, found)
-    print(f"wrote {cfg_path} with {len(found)} folder(s).")
+    written = write_seeded_config(cfg_path, found, overwrite=args.overwrite)
+    if written:
+        print(f"wrote {cfg_path} with {len(found)} folder(s).")
+    else:
+        print(f"config already exists at {cfg_path}; not overwriting (use --overwrite to force).")
     return 0
 
 

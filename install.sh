@@ -42,7 +42,8 @@ make -C "$SRC_DIR" install-termux || err "make install-termux failed."
 
 # Step 6: seed config (auto-detect, fall back to interactive).
 info "Seeding config — detecting known recording folders..."
-python3 -m call_cleaner.first_run --detect || err "config seeding failed; you can run 'cleaner config init' manually later."
+PYTHONPATH="$PREFIX/lib/call-cleaner" python3 -m call_cleaner.first_run --detect \
+    || err "config seeding failed; you can run 'cleaner config init' manually later."
 
 # Step 7: print + offer to run schedule setup.
 echo

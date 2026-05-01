@@ -9,8 +9,5 @@ TERMUX_PKG_DEPENDS="python, termux-api"
 TERMUX_PKG_BUILD_IN_SRC=true
 
 termux_step_make_install() {
-    pip install --no-deps --target "$TERMUX_PREFIX/lib/python3.12/site-packages" .
-    install -d "$TERMUX_PREFIX/share/call-cleaner"
-    install -m 755 share/wrapper.sh "$TERMUX_PREFIX/share/call-cleaner/wrapper.sh"
-    install -m 755 share/wrapper-purge.sh "$TERMUX_PREFIX/share/call-cleaner/wrapper-purge.sh"
+    pip install . --prefix=$TERMUX_PREFIX
 }

@@ -50,10 +50,11 @@ def render(*, force: str | None = None) -> str:
         run_body = WRAPPER_PROOT_SH
         purge_body = WRAPPER_PROOT_PURGE_SH
 
+    pkg_line = "pkg install termux-api" if is_termux else "pkg install termux-api proot-distro"
     return f"""\
 # Run these commands in NATIVE TERMUX (not inside PRoot Ubuntu).
 
-pkg install termux-api proot-distro
+{pkg_line}
 mkdir -p ~/.shortcuts
 
 # Run trampoline:

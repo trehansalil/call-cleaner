@@ -141,12 +141,12 @@ def cmd_run(args) -> int:
     # Notification on completion (best-effort; no-op if termux-api missing).
     if n > 0:
         notifier.notify("Call Cleaner", f"trashed {n}, freed {_human_size(freed)}")
-    if notifier.is_low_storage():
-        notifier.notify(
-            "Storage low",
-            "tap to open trash",
-            action="cleaner trash list",
-        )
+        if notifier.is_low_storage():
+            notifier.notify(
+                "Storage low",
+                "tap to open trash",
+                action="cleaner trash list",
+            )
     return 130 if _interrupt_requested else 0
 
 

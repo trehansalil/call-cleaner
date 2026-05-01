@@ -27,3 +27,17 @@ def test_explicit_proot_flag_overrides_env(monkeypatch):
     out = install_schedule.render(force="proot")
     assert "proot-distro login ubuntu" in out
     assert "$PREFIX/bin/cleaner" not in out
+
+
+def test_termux_pkg_install_omits_proot_distro(monkeypatch):
+    monkeypatch.setenv("PREFIX", "/data/data/com.termux/files/usr")
+    out = install_schedule.render()
+    # Termux env: should ask for termux-api, NOT proot-distro
+    assert "pkg install termux-api" in out
+    assert "proot-distro" not in out
+
+
+def test_proot_pkg_install_includes_proot_distro(monkeypatch):
+    monkeypatch.delenv("PREFIX", raising=False)
+    out = install_schedule.render()
+    assert "pkg install termux-api proot-distro" in out
