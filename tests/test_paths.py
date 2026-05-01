@@ -22,6 +22,12 @@ def test_default_trash_dir():
     assert paths.DEFAULT_TRASH_DIR == "/sdcard/.CallCleanerTrash"
 
 
+def test_data_dir_respects_xdg_data_home(tmp_home, monkeypatch):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_home / "data"))
+    assert paths.state_path() == tmp_home / "data" / "call-cleaner" / "state.json"
+    assert paths.log_path() == tmp_home / "data" / "call-cleaner" / "run.log"
+
+
 def test_ensure_parent_creates_missing_dirs(tmp_path):
     target = tmp_path / "a" / "b" / "c.txt"
     paths.ensure_parent(target)

@@ -17,8 +17,13 @@ def setup(
     max_bytes: int = DEFAULT_MAX_BYTES,
     backup_count: int = DEFAULT_BACKUP_COUNT,
 ) -> logging.Logger:
-    """Return a configured logger. Idempotent: returns the same logger
-    on repeat calls with the same name."""
+    """Return a configured logger.
+
+    Idempotent: returns the same logger on repeat calls with the same name.
+    Note: arguments other than ``name`` are honored only on the first call;
+    subsequent calls with different ``logfile``/size/backup args return the
+    existing logger unchanged.
+    """
     logger = logging.getLogger(name)
     if logger.handlers:
         return logger
@@ -33,4 +38,5 @@ def setup(
     )
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
+    logger.propagate = False
     return logger
