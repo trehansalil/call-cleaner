@@ -135,3 +135,30 @@ def test_init_does_not_overwrite(tmp_home):
     p2 = config.init()
     assert p == p2
     assert p.read_text() == "custom = true\n"
+
+
+def test_age_days_zero_is_valid(tmp_path):
+    body = VALID.replace("age_days = 90", "age_days = 0", 1)
+    cfg = config.load(write(tmp_path, body))
+    assert cfg.presets["default"].rules[0].age_days == 0
+
+
+def test_age_days_bool_rejected(tmp_path):
+    body = VALID.replace("age_days = 90", "age_days = true", 1)
+    with pytest.raises(config.ConfigError, match="age_days"):
+        config.load(write(tmp_path, body))
+
+
+def test_retention_days_bool_rejected(tmp_path):
+    body = VALID.replace("retention_days = 30", "retention_days = true")
+    with pytest.raises(config.ConfigError, match="retention_days"):
+        config.load(write(tmp_path, body))
+
+
+def test_alias_must_be_absolute(tmp_path):
+    body = VALID.replace(
+        '"/sdcard/Music/Recordings/Call Recordings"',
+        '"relative/path"',
+    )
+    with pytest.raises(config.ConfigError, match="relative"):
+        config.load(write(tmp_path, body))

@@ -95,7 +95,7 @@ def load(path: Path) -> Config:
         raise ConfigError("[trash] must be a table")
     trash_dir = trash_raw.get("dir", paths.DEFAULT_TRASH_DIR)
     retention = trash_raw.get("retention_days", 30)
-    if not isinstance(retention, int) or retention <= 0:
+    if isinstance(retention, bool) or not isinstance(retention, int) or retention <= 0:
         raise ConfigError("trash.retention_days must be a positive integer")
     if not isinstance(trash_dir, str):
         raise ConfigError("trash.dir must be a string")
@@ -124,7 +124,12 @@ def load(path: Path) -> Config:
             resolved = _resolve_alias(folder, aliases)
             if resolved is None:
                 raise ConfigError(f"preset {name!r} rule #{i}: unknown alias {folder!r}")
-            if not isinstance(age, int) or age < 0:
+            if not resolved.startswith("/"):
+                raise ConfigError(
+                    f"preset {name!r} rule #{i}: alias {folder!r} resolves to a "
+                    f"relative path ({resolved!r}); [paths] values must be absolute"
+                )
+            if isinstance(age, bool) or not isinstance(age, int) or age < 0:
                 raise ConfigError(f"preset {name!r} rule #{i}: age_days must be a non-negative integer")
             if action not in _VALID_ACTIONS:
                 raise ConfigError(
