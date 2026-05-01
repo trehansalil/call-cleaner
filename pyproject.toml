@@ -4,12 +4,37 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "call-cleaner"
-version = "0.1.0"
+version = "0.2.0"
 description = "Sweep old call recordings on /sdcard with trash + restore."
+readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Salil Trehan", email = "trehansalil1@gmail.com" }]
+keywords = ["termux", "android", "oneplus", "call-recording", "cleanup"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Environment :: Console :: Curses",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Filesystems",
+    "Topic :: Utilities",
+]
+
+[project.urls]
+Homepage = "https://github.com/trehansalil/call-cleaner"
+Repository = "https://github.com/trehansalil/call-cleaner"
+Issues = "https://github.com/trehansalil/call-cleaner/issues"
+
+[project.scripts]
+cleaner = "call_cleaner.cli:main"
 
 [project.optional-dependencies]
-dev = ["pytest>=7"]
+dev = ["pytest>=7", "build>=1.0"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
