@@ -16,3 +16,19 @@ jobs:
           python-version: "3.11"
       - run: pip install -e '.[dev]'
       - run: pytest -v
+
+  termux-shape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install-termux into a fake $PREFIX
+        run: |
+          FAKE=/tmp/fake-prefix
+          mkdir -p "$FAKE"
+          make install-termux PREFIX="$FAKE"
+          test -x "$FAKE/bin/cleaner"
+          test -x "$FAKE/share/call-cleaner/wrapper.sh"
+          test -x "$FAKE/share/call-cleaner/wrapper-purge.sh"
+          test -f "$FAKE/lib/call-cleaner/call_cleaner/__init__.py"
+          test -f "$FAKE/lib/call-cleaner/call_cleaner/cli.py"
+          echo "termux-shape OK"

@@ -1,9 +1,11 @@
 #!/bin/sh
-# Make the installed call_cleaner package importable regardless of the
-# system python's default sys.path.
-PKG_DIR="/usr/local/lib/call-cleaner"
-if [ -d "$PKG_DIR" ]; then
-    PYTHONPATH="${PKG_DIR}${PYTHONPATH:+:${PYTHONPATH}}"
-    export PYTHONPATH
-fi
+# Make the installed call_cleaner package importable regardless of which
+# layout (PRoot /usr/local or Termux $PREFIX) is in use. Both candidates
+# are checked; only existing dirs are added to PYTHONPATH.
+for D in "/usr/local/lib/call-cleaner" "${PREFIX:-}/lib/call-cleaner"; do
+    if [ -n "$D" ] && [ -d "$D" ]; then
+        PYTHONPATH="${D}${PYTHONPATH:+:${PYTHONPATH}}"
+    fi
+done
+export PYTHONPATH
 exec python3 -m call_cleaner "$@"
