@@ -13,6 +13,7 @@ from . import config as config_mod
 from . import doctor as doctor_mod
 from . import install_schedule
 from . import log as log_mod
+from . import notifier
 from . import paths as paths_mod
 from . import scanner
 from . import state as state_mod
@@ -74,6 +75,16 @@ def cmd_run(args) -> int:
     logger = log_mod.setup()
     cfg = _load_config()
     preset = _resolve_preset(cfg, args.preset)
+    if not args.dry_run:
+        # Skip on low battery or battery saver — exit 0 (skipping is normal).
+        if notifier.is_low_battery():
+            print("INFO: skipping run: low battery", file=sys.stderr)
+            logger.info("skipping run: low battery")
+            return 0
+        if notifier.is_battery_saver_on():
+            print("INFO: skipping run: battery saver on", file=sys.stderr)
+            logger.info("skipping run: battery saver on")
+            return 0
     matches = scanner.scan_preset(preset)
     if args.dry_run:
         return cmd_scan(args)
@@ -84,7 +95,6 @@ def cmd_run(args) -> int:
     n = 0
     freed = 0
     for m in matches:
-        # Skip if the file changed under us between scan and now.
         try:
             cur_mtime = m.path.stat().st_mtime
         except OSError:
@@ -116,7 +126,6 @@ def cmd_run(args) -> int:
             except OSError as e:
                 print(f"WARN: could not trash {m.path}: {e}", file=sys.stderr)
                 logger.warning("could not trash %s: %s", m.path, e)
-        # Honor SIGINT after each file finishes its atomic rename + sidecar.
         if _interrupt_requested:
             print("INFO: interrupted, exiting cleanly.", file=sys.stderr)
             logger.info("interrupted, exiting cleanly.")
@@ -127,8 +136,17 @@ def cmd_run(args) -> int:
     s.last_run_trashed = n
     s.last_run_freed_bytes = freed
     state_mod.save(paths_mod.state_path(), s)
-    logger.info("run complete: preset=%s trashed=%d freed=%d", preset.name, n, freed)
     print(f"processed {n} file(s), freed {_human_size(freed)} (preset={preset.name})")
+    logger.info("run complete: preset=%s trashed=%d freed=%d", preset.name, n, freed)
+    # Notification on completion (best-effort; no-op if termux-api missing).
+    if n > 0:
+        notifier.notify("Call Cleaner", f"trashed {n}, freed {_human_size(freed)}")
+    if notifier.is_low_storage():
+        notifier.notify(
+            "Storage low",
+            "tap to open trash",
+            action="cleaner trash list",
+        )
     return 130 if _interrupt_requested else 0
 
 
